@@ -14,3 +14,7 @@ cp sniffle.out builds/sniffle_cc1352.out
 make clean
 make -j3 PLATFORM=CC2652RB1F
 cp sniffle.out builds/sniffle_cc2652rb.out
+
+make clean
+make -j3 PLATFORM=CC2640R2F
+cp sniffle.out builds/sniffle_cc2640r2.out
