@@ -1,9 +1,3 @@
-SIMPLELINK_SDK_INSTALL_DIR ?= $(HOME)/ti/simplelink_cc13x2_26x2_sdk_3_40_00_02
-
-include $(SIMPLELINK_SDK_INSTALL_DIR)/imports.mak
-
-XDCPATH = $(SIMPLELINK_SDK_INSTALL_DIR)/source;$(SIMPLELINK_SDK_INSTALL_DIR)/kernel/tirtos/packages;
-
 CC = "$(GCC_ARMCOMPILER)/bin/arm-none-eabi-gcc"
 LNK = "$(GCC_ARMCOMPILER)/bin/arm-none-eabi-gcc"
 
@@ -13,7 +7,11 @@ NAME = sniffle
 CC26X2_PLATFORMS = CC2642R1F CC2652R1F
 CC1352_PLATFORMS = CC1352R1F3
 CC2652RB_PLATFORMS = CC2652RB1F
-SUPPORTED_PLATFORMS = $(CC26X2_PLATFORMS) $(CC1352_PLATFORMS) $(CC2652RB_PLATFORMS)
+CC2640R2_PLATFORMS = CC2640R2F
+
+SDK_CC13x2_26x2 = $(CC26X2_PLATFORMS) $(CC1352_PLATFORMS) $(CC2652RB_PLATFORMS) 
+SDK_CC2640r2 = $(CC2640R2_PLATFORMS)
+SUPPORTED_PLATFORMS = $(SDK_CC13x2_26x2) $(SDK_CC2640r2)
 
 ifeq ($(PLATFORM),)
     PLATFORM = CC2642R1F
@@ -56,10 +54,39 @@ ifneq ($(filter $(PLATFORM), $(CC2652RB_PLATFORMS)),)
     LFLAGS += -l:ti/dpl/lib/dpl_cc26x2.am4fg
     SYSCFG_BOARD = /ti/boards/CC2652RB_LAUNCHXL
 endif
+ifneq ($(filter $(PLATFORM), $(CC2640R2_PLATFORMS)),)
+    SOURCES = $(wildcard CC2640R2/*.c)
+    CCXML = CC2640R2/CC2640R2F.ccxml
+    CFLAGS += -DDeviceFamily_CC26X0R2
+    CFLAGS += -ICC2640
+    LFLAGS += -Wl,-T,CC2640R2/CC2640R2_LAUNCHXL_TIRTOS.lds
+    LFLAGS += -l:ti/drivers/rf/lib/rf_multiMode_cc26x0r2.am3g
+    LFLAGS += -l:ti/drivers/lib/drivers_cc26x0r2.am3g
+    LFLAGS += -l:ti/dpl/lib/dpl_cc26x0r2.am3g
+    SYSCFG_BOARD = /ti/boards/CC2640R2_LAUNCHXL
+endif
 
-
-XDCTARGET = gnu.targets.arm.M4F
 TI_PLTFRM = ti.platforms.simplelink:$(PLATFORM)
+
+ifneq ($(filter $(PLATFORM), $(SDK_CC13x2_26x2)),)
+    SIMPLELINK_SDK_INSTALL_DIR ?= $(HOME)/ti/simplelink_cc13x2_26x2_sdk_3_40_00_02
+    XDCTARGET = gnu.targets.arm.M4F
+    LFLAGS += \
+        -l:ti/display/lib/display.am4fg \
+        -l:ti/grlib/lib/gcc/m4f/grlib.a \
+        -l:third_party/spiffs/lib/gcc/m4f/spiffs_cc26xx.a
+else
+    SIMPLELINK_SDK_INSTALL_DIR ?= $(HOME)/ti/simplelink_cc2640r2_sdk_3_40_00_10
+    XDCTARGET = gnu.targets.arm.M3
+    LFLAGS += \
+        -l:ti/display/lib/display.am3g \
+        -l:ti/grlib/lib/gcc/m3/grlib.a \
+        -l:third_party/spiffs/lib/gcc/m3/spiffs_cc26xx.a
+endif
+
+include $(SIMPLELINK_SDK_INSTALL_DIR)/imports.mak
+
+XDCPATH = $(SIMPLELINK_SDK_INSTALL_DIR)/source;$(SIMPLELINK_SDK_INSTALL_DIR)/kernel/tirtos/packages;
 
 CFLAGS += -I. \
     -D__STRICT_ANSI__ \
@@ -73,12 +100,8 @@ CFLAGS += -I. \
 LFLAGS += \
     "-Wl,-Map,$(NAME).map" \
     "-L$(SIMPLELINK_SDK_INSTALL_DIR)/source" \
-    -l:ti/display/lib/display.am4fg \
-    -l:ti/grlib/lib/gcc/m4f/grlib.a \
-    -l:third_party/spiffs/lib/gcc/m4f/spiffs_cc26xx.a \
     "-L$(SIMPLELINK_SDK_INSTALL_DIR)/kernel/tirtos/packages" \
     "-Wl,-T,$(CONFIGPKG)/linker.cmd" \
-    -l:ti/devices/cc13x2_cc26x2/driverlib/bin/gcc/driverlib.lib \
     -march=armv7e-m \
     -mthumb \
     -mfloat-abi=hard \
@@ -93,6 +116,14 @@ LFLAGS += \
     -lm \
     -lnosys \
     --specs=nano.specs
+
+ifneq ($(filter $(PLATFORM), $(SDK_CC13x2_26x2)),)
+    LFLAGS += \
+        -l:ti/devices/cc13x2_cc26x2/driverlib/bin/gcc/driverlib.lib
+else
+    LFLAGS += \
+        -l:ti/devices/cc26x0r2/driverlib/bin/gcc/driverlib.lib
+endif
 
 # SysConfig generated
 SOURCES += ti_drivers_config.c ti_devices_config.c ti_radio_config.c
