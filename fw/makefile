@@ -104,12 +104,10 @@ LFLAGS += \
     "-Wl,-T,$(CONFIGPKG)/linker.cmd" \
     -march=armv7e-m \
     -mthumb \
-    -mfloat-abi=hard \
     -mfpu=fpv4-sp-d16 \
     -nostartfiles \
     -static \
     -Wl,--gc-sections \
-    "-L$(SIMPLELINK_SDK_INSTALL_DIR)/kernel/tirtos/packages/gnu/targets/arm/libs/install-native/arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/hard" \
     "-L$(GCC_ARMCOMPILER)/arm-none-eabi/lib" \
     -lgcc \
     -lc \
@@ -119,9 +117,13 @@ LFLAGS += \
 
 ifneq ($(filter $(PLATFORM), $(SDK_CC13x2_26x2)),)
     LFLAGS += \
+        -mfloat-abi=hard \
+        "-L$(SIMPLELINK_SDK_INSTALL_DIR)/kernel/tirtos/packages/gnu/targets/arm/libs/install-native/arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/hard" \
         -l:ti/devices/cc13x2_cc26x2/driverlib/bin/gcc/driverlib.lib
 else
     LFLAGS += \
+        -mfloat-abi=softfp \
+        "-L$(SIMPLELINK_SDK_INSTALL_DIR)/kernel/tirtos/packages/gnu/targets/arm/libs/install-native/arm-none-eabi/lib/thumb/v7e-m/" \
         -l:ti/devices/cc26x0r2/driverlib/bin/gcc/driverlib.lib
 endif
 
